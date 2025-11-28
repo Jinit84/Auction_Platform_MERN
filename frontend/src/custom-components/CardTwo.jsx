@@ -4,8 +4,12 @@ import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { deleteAuction, republishAuction } from "@/store/slices/auctionSlice";
+import { IoTimerOutline } from "react-icons/io5";
 
 const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const dispatch = useDispatch();
+
   const calculateTimeLeft = () => {
     const now = new Date();
     const startDifference = new Date(startTime) - now;
@@ -14,7 +18,7 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
 
     if (startDifference > 0) {
       timeLeft = {
-        type: "Starts In:",
+        type: "Starts In",
         days: Math.floor(startDifference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((startDifference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((startDifference / 1000 / 60) % 60),
@@ -22,7 +26,7 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
       };
     } else if (endDifference > 0) {
       timeLeft = {
-        type: "Ends In:",
+        type: "Ends In",
         days: Math.floor(endDifference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((endDifference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((endDifference / 1000 / 60) % 60),
@@ -35,73 +39,83 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
-    });
-    return () => clearTimeout(timer);
-  }, [timeLeft]);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [startTime, endTime]);
 
   const formatTimeLeft = ({ days, hours, minutes, seconds }) => {
     const pad = (num) => String(num).padStart(2, "0");
-    return `(${days} Days) ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    if (days > 0) {
+      return `${days}d ${pad(hours)}h ${pad(minutes)}m`;
+    }
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
-  const dispatch = useDispatch();
   const handleDeleteAuction = () => {
-    dispatch(deleteAuction(id));
+    // Optional: Add a confirmation dialog before deleting
+    if (window.confirm(`Are you sure you want to delete the auction "${title}"?`)) {
+      dispatch(deleteAuction(id));
+    }
   };
-
-  const [openDrawer, setOpenDrawer] = useState(false);
+  
+  const isEnded = Object.keys(timeLeft).length === 0;
 
   return (
     <>
-      <div className="basis-full bg-white rounded-md group sm:basis-56 lg:basis-60 2xl:basis-80">
-        <img
-          src={imgSrc}
-          alt={title}
-          className="w-full aspect-[4/3] m-auto md:p-12"
-        />
-        <div className="px-2 pt-4 pb-2">
-          <h5 className="font-semibold text-[18px] group-hover:text-[#d6482b] mb-2">
+      <div className="group flex-grow basis-full sm:basis-44 lg:basis-52 2xl:basis-64 bg-white rounded-lg border border-gray-200 shadow-md flex flex-col overflow-hidden" style={{ maxWidth: '260px', minWidth: '180px' }}>
+        <div className="relative w-full h-36 overflow-hidden flex items-center justify-center bg-gray-100">
+          <img
+            src={imgSrc}
+            alt={title}
+            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            style={{ aspectRatio: '4/3' }}
+          />
+        </div>
+        <div className="p-3 flex flex-col flex-grow">
+          <h3 className="font-semibold text-base text-[var(--foreground)] mb-1 truncate">
             {title}
-          </h5>
-          {startingBid && (
-            <p className="text-stone-600 font-light">
-              Starting Bid:{" "}
-              <span className="text-[#fdba88] font-bold ml-1">
-                {startingBid}
-              </span>
-            </p>
-          )}
-          <p className="text-stone-600 font-light">
-            {timeLeft.type}
-            {Object.keys(timeLeft).length > 1 ? (
-              <span className="text-[#fdba88] font-bold ml-1">
-                {formatTimeLeft(timeLeft)}
-              </span>
-            ) : (
-              <span className="text-[#fdba88] font-bold ml-1">Time's up!</span>
-            )}
-          </p>
-          <div className="flex flex-col gap-2 mt-4">
+          </h3>
+          <div className="mt-auto">
+            <div className="mb-2">
+              <p className="text-xs text-[var(--muted-foreground)]">Starting Bid</p>
+              <p className="text-lg font-bold text-[var(--foreground)]">
+                Rs.{startingBid.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+                <IoTimerOutline /> {timeLeft.type || "Auction"}
+              </p>
+              {Object.keys(timeLeft).length > 1 ? (
+                <p className="text-base font-bold text-[var(--brand)] font-mono">
+                  {formatTimeLeft(timeLeft)}
+                </p>
+              ) : (
+                <p className="text-base font-bold text-red-500">Ended</p>
+              )}
+            </div>
+          </div>
+          <div className="border-t pt-3 mt-3 flex flex-col gap-2">
+             <button
+              onClick={() => setOpenDrawer(true)}
+              disabled={!isEnded}
+              className="w-full text-center font-semibold bg-[var(--brand)] text-white px-3 py-1.5 rounded-md transition-all duration-300 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Republish Auction
+            </button>
             <Link
-              className="bg-stone-700 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-black"
+              className="w-full text-center font-semibold border border-[var(--brand)] text-[var(--brand)] px-3 py-1.5 rounded-md transition-all duration-300 hover:bg-[var(--brand)] hover:text-white text-sm"
               to={`/auction/details/${id}`}
             >
               View Auction
             </Link>
             <button
-              className="bg-red-400 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-red-600"
               onClick={handleDeleteAuction}
+              className="w-full text-center text-xs text-red-500 hover:bg-red-50 rounded-md py-1.5 transition-all duration-300"
             >
               Delete Auction
-            </button>
-            <button
-              disabled={new Date(endTime) > Date.now()}
-              onClick={() => setOpenDrawer(true)}
-              className="bg-sky-400 text-center text-white text-xl px-4 py-2 rounded-md transition-all duration-300 hover:bg-sky-700"
-            >
-              Republish Auction
             </button>
           </div>
         </div>
@@ -111,39 +125,44 @@ const CardTwo = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   );
 };
 
-export default CardTwo;
-
 const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
   const dispatch = useDispatch();
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const {loading} = useSelector(state => state.auction);
-  const handleRepbulishAuction = () => {
+  const { loading } = useSelector((state) => state.auction);
+
+  const handleRepublishAuction = () => {
     const formData = new FormData();
     formData.append("startTime", startTime);
     formData.append("endTime", endTime);
     dispatch(republishAuction(id, formData));
+    // Optionally close drawer on success
   };
 
   return (
     <section
-      className={`fixed ${
-        openDrawer && id ? "bottom-0" : "-bottom-full"
-      }  left-0 w-full transition-all duration-300 h-full bg-[#00000087] flex items-end`}
+      className={`fixed inset-0 bg-black bg-opacity-60 flex items-end z-50 transition-opacity duration-300 ${
+        openDrawer ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      onClick={() => setOpenDrawer(false)}
     >
-      <div className="bg-white h-fit transition-all duration-300 w-full">
-        <div className="w-full px-5 py-8 sm:max-w-[640px] sm:m-auto">
-          <h3 className="text-[#D6482B]  text-3xl font-semibold text-center mb-1">
+      <div
+        className={`bg-white w-full max-w-lg mx-auto rounded-t-xl transition-transform duration-300 ${
+          openDrawer ? "translate-y-0" : "translate-y-full"
+        }`}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+      >
+        <div className="p-6">
+          <h3 className="text-2xl font-semibold text-center mb-2 text-[var(--foreground)]">
             Republish Auction
           </h3>
-          <p className="text-stone-600">
-            Let's republish auction with same details but new starting and
-            ending time.
+          <p className="text-center text-[var(--muted-foreground)] mb-6">
+            Set a new start and end time for this item.
           </p>
-          <form className="flex flex-col gap-5 my-5">
-            <div className="flex flex-col gap-3">
-              <label className="text-[16px] text-stone-600">
-                Republish Auction Start Time
+          <form className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="font-medium text-[var(--muted-foreground)]">
+                New Start Time
               </label>
               <DatePicker
                 selected={startTime}
@@ -151,13 +170,13 @@ const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
                 showTimeSelect
                 timeFormat="HH:mm"
                 timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
+                dateFormat={"MMMM d, yyyy h:mm aa"}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
               />
             </div>
-            <div className="flex flex-col gap-3">
-              <label className="text-[16px] text-stone-600">
-                Republish Auction End Time
+            <div className="flex flex-col gap-2">
+              <label className="font-medium text-[var(--muted-foreground)]">
+                New End Time
               </label>
               <DatePicker
                 selected={endTime}
@@ -165,23 +184,22 @@ const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
                 showTimeSelect
                 timeFormat="HH:mm"
                 timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
+                dateFormat={"MMMM d, yyyy h:mm aa"}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
               />
             </div>
-            <div>
+            <div className="flex flex-col gap-3 mt-4">
               <button
                 type="button"
-                className="bg-blue-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-blue-700"
-                onClick={handleRepbulishAuction}
+                className="w-full bg-[var(--brand)] text-white font-semibold py-3 rounded-md transition-opacity hover:opacity-90 disabled:opacity-50"
+                onClick={handleRepublishAuction}
+                disabled={loading}
               >
-                {loading ? "Republishing" : "Republish"} 
+                {loading ? "Republishing..." : "Confirm and Republish"}
               </button>
-            </div>
-            <div>
               <button
                 type="button"
-                className="bg-yellow-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-yellow-700"
+                className="w-full bg-gray-200 text-gray-700 font-semibold py-3 rounded-md transition-colors hover:bg-gray-300"
                 onClick={() => setOpenDrawer(false)}
               >
                 Cancel
@@ -193,3 +211,5 @@ const Drawer = ({ setOpenDrawer, openDrawer, id }) => {
     </section>
   );
 };
+
+export default CardTwo;

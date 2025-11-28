@@ -3,78 +3,51 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
-  LineElement,
-  PointElement,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useSelector } from "react-redux";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  PointElement
-);
+ChartJS.register( CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend );
 
 const BiddersAuctioneersGraph = () => {
-  const { totalAuctioneers, totalBidders } = useSelector(
-    (state) => state.superAdmin
-  );
+  const { totalAuctioneers, totalBidders } = useSelector((state) => state.superAdmin);
+  
   const data = {
-    labels: [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
+    labels: [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ],
     datasets: [
       {
-        label: "Number of Bidders",
+        label: "Bidders",
         data: totalBidders,
-        borderColor: "#D6482B",
-        fill: false,
+        borderColor: "#4A90E2", // Our --brand blue
+        backgroundColor: "#4A90E2",
+        tension: 0.3,
       },
       {
-        label: "Number of Auctioneers",
+        label: "Auctioneers",
         data: totalAuctioneers,
-        borderColor: "#fdba88",
-        fill: false,
+        borderColor: "#F5A623", // Our --accent gold
+        backgroundColor: "#F5A623",
+        tension: 0.3,
       },
     ],
   };
 
   const options = {
+    responsive: true,
     scales: {
-      y: {
-        beginAtZero: true,
-        max: 50,
-        ticks: {
-          callback: function (value) {
-            return value.toLocaleString();
-          },
-        },
-      },
+        y: { beginAtZero: true }
     },
     plugins: {
+      legend: {
+        position: 'top',
+      },
       title: {
-        display: true,
-        text: "Number of Bidders And Auctioneers Registered",
+        display: false,
       },
     },
   };

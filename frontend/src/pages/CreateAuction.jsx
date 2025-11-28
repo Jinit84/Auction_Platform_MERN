@@ -1,223 +1,174 @@
-import { createAuction } from "@/store/slices/auctionSlice";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
+import Webcam from "react-webcam";
+import { createAuction } from "../store/slices/auctionSlice.js";
+import { FiUploadCloud } from "react-icons/fi";
+import { FaCamera } from "react-icons/fa";
+
+
+// Helper function to convert base64 data URL to a File object
+const dataURLtoFile = (dataurl, filename) => {
+    let arr = dataurl.split(','),
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
 
 const CreateAuction = () => {
-  const [image, setImage] = useState("");
-  const [imagePreview, setImagePreview] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [condition, setCondition] = useState("");
-  const [startingBid, setStartingBid] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+    const [image, setImage] = useState("");
+    const [imagePreview, setImagePreview] = useState("");
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [category, setCategory] = useState("");
+    const [condition, setCondition] = useState("");
+    const [startingBid, setStartingBid] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
+    const [showCamera, setShowCamera] = useState(false);
 
-  const auctionCategories = [
-    "Electronics",
-    "Furniture",
-    "Art & Antiques",
-    "Jewelry & Watches",
-    "Automobiles",
-    "Real Estate",
-    "Collectibles",
-    "Fashion & Accessories",
-    "Sports Memorabilia",
-    "Books & Manuscripts",
-  ];
+    const webcamRef = useRef(null);
+    const dispatch = useDispatch();
+    const navigateTo = useNavigate();
 
-  const imageHandler = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      setImage(file);
-      setImagePreview(reader.result);
+    const { loading } = useSelector((state) => state.auction);
+    const { isAuthenticated, user } = useSelector((state) => state.user);
+    
+    const auctionCategories = [ "Electronics", "Furniture", "Art & Antiques", "Jewelry & Watches", "Automobiles", "Real Estate", "Collectibles", "Fashion & Accessories", "Sports Memorabilia", "Books & Manuscripts" ];
+
+    useEffect(() => {
+        if (!isAuthenticated || user.role !== "Auctioneer") {
+            navigateTo("/");
+        }
+    }, [isAuthenticated, user, navigateTo]);
+
+    const imageHandler = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            setImage(file);
+            setImagePreview(reader.result);
+        };
     };
-  };
 
-  const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auction);
+    const capture = useCallback(() => {
+        const imageSrc = webcamRef.current.getScreenshot();
+        if (imageSrc) {
+            const file = dataURLtoFile(imageSrc, 'auction-photo.jpg');
+            setImage(file);
+            setImagePreview(imageSrc);
+            setShowCamera(false);
+        }
+    }, [webcamRef]);
 
-  const handleCreateAuction = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("image", image);
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("category", category);
-    formData.append("condition", condition);
-    formData.append("startingBid", startingBid);
-    formData.append("startTime", startTime);
-    formData.append("endTime", endTime);
-    dispatch(createAuction(formData));
-  };
+    const handleCreateAuction = (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("image", image);
+        formData.append("title", title);
+        formData.append("description", description);
+        formData.append("category", category);
+        formData.append("condition", condition);
+        formData.append("startingBid", startingBid);
+        formData.append("startTime", startTime);
+        formData.append("endTime", endTime);
+        dispatch(createAuction(formData));
+    };
 
-  const { isAuthenticated, user } = useSelector((state) => state.user);
-  const navigateTo = useNavigate();
-  useEffect(() => {
-    if (!isAuthenticated || user.role !== "Auctioneer") {
-      navigateTo("/");
-    }
-  }, [isAuthenticated]);
+    return (
+        <>
+            <article className="w-full ml-0 m-0 h-fit px-5 pt-20 lg:pl-[320px] flex flex-col">
+                <div className="max-w-4xl mx-auto w-full">
+                    <h1 className="text-4xl font-bold mb-2 text-[var(--foreground)]">Create New Auction</h1>
+                    <p className="text-lg text-[var(--muted-foreground)] mb-8">Fill out the details below to list your item.</p>
 
-  return (
-    <article className="w-full ml-0 m-0 h-fit px-5 pt-20 lg:pl-[320px] flex flex-col">
-      <h1
-        className={`text-[#d6482b] text-2xl font-bold mb-2 min-[480px]:text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl`}
-      >
-        Create Auction
-      </h1>
-      <div className="bg-white mx-auto w-full h-auto px-2 flex flex-col gap-4 items-center py-4 justify-center rounded-md">
-        <form
-          className="flex flex-col gap-5 w-full"
-          onSubmit={handleCreateAuction}
-        >
-          <p className="font-semibold text-xl md:text-2xl">Auction Detail</p>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">Title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none"
-              >
-                <option value="">Select Category</option>
-                {auctionCategories.map((element) => {
-                  return (
-                    <option key={element} value={element}>
-                      {element}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">Condition</label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none"
-              >
-                <option value="">Select Condition</option>
-                <option value="New">New</option>
-                <option value="Used">Used</option>
-              </select>
-            </div>
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">Starting Bid</label>
-              <input
-                type="number"
-                value={startingBid}
-                onChange={(e) => setStartingBid(e.target.value)}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="text-[16px] py-2 bg-transparent border-2 border-stone-500 focus:outline-none px-2 rounded-md"
-                rows={10}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">
-                Auction Starting Time
-              </label>
-              <DatePicker
-                selected={startTime}
-                onChange={(date) => setStartTime(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-1">
-              <label className="text-[16px] text-stone-600">
-                Auction End Time
-              </label>
-              <DatePicker
-                selected={endTime}
-                onChange={(date) => setEndTime(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat={"MMMM d, yyyy h,mm aa"}
-                className="text-[16px] py-2 bg-transparent border-b-[1px] border-b-stone-500 focus:outline-none w-full"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-4">
-            <label className="font-semibold text-xl md:text-2xl">
-              Auction Item Image
-            </label>
-            <div class="flex items-center justify-center w-full">
-              <label
-                for="dropzone-file"
-                class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-              >
-                <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt={title} className="w-44 h-auto"/>
-                  ) : (
-                    <>
-                      <svg
-                        class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 20 16"
-                      >
-                        <path
-                          stroke="currentColor"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                        />
-                      </svg>
-                    </>
-                  )}
+                    <div className="bg-white p-8 rounded-lg shadow-md">
+                        <form className="space-y-6" onSubmit={handleCreateAuction}>
+                            {/* Section 1: Item Details */}
+                            <div>
+                                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">Item Details</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <input type="text" placeholder="Item Title" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" />
+                                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]">
+                                        <option value="">Select Category</option>
+                                        {auctionCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                    </select>
+                                    <select value={condition} onChange={(e) => setCondition(e.target.value)} className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]">
+                                        <option value="">Select Condition</option>
+                                        <option value="New">New</option>
+                                        <option value="Used">Used</option>
+                                    </select>
+                                    <input type="number" placeholder="Starting Bid ($)" value={startingBid} onChange={(e) => setStartingBid(e.target.value)} className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" />
+                                </div>
+                                <div className="mt-6">
+                                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detailed Description" rows={6} className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" />
+                                </div>
+                            </div>
 
-                  <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span class="font-semibold">Click to upload</span> or drag
-                    and drop
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    SVG, PNG, JPG or GIF (MAX. 800x400px)
-                  </p>
+                            {/* Section 2: Auction Timing */}
+                            <div>
+                                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">Auction Timing</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <DatePicker selected={startTime} onChange={(date) => setStartTime(date)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="MMMM d, yyyy h:mm aa" className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholderText="Select Start Time" />
+                                    <DatePicker selected={endTime} onChange={(date) => setEndTime(date)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="MMMM d, yyyy h:mm aa" className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholderText="Select End Time" />
+                                </div>
+                            </div>
+
+                            {/* Section 3: Item Image */}
+                            <div>
+                                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">Item Image</h2>
+                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        {imagePreview ? (
+                                            <img src={imagePreview} alt={title} className="w-auto h-48 object-contain" />
+                                        ) : (
+                                            <>
+                                                <FiUploadCloud className="w-10 h-10 mb-4 text-gray-400" />
+                                                <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                                <p className="text-xs text-gray-500">PNG, JPG, or GIF</p>
+                                            </>
+                                        )}
+                                    </div>
+                                    <input id="dropzone-file" type="file" className="hidden" onChange={imageHandler} />
+                                </label>
+                                <div className="text-center">
+                                    <p className="my-4 text-stone-600">OR</p>
+                                    <button type="button" onClick={() => setShowCamera(true)} className="bg-gray-700 text-white font-semibold hover:bg-black transition-all duration-300 py-2 px-4 rounded-md flex items-center gap-2 mx-auto">
+                                        <FaCamera /> Use Camera
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" disabled={loading} className="w-full bg-[var(--brand)] text-white font-bold text-lg px-8 py-3 rounded-md hover:opacity-90 transition-opacity duration-300 disabled:opacity-50">
+                                {loading ? "Creating Auction..." : "Create Auction"}
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <input id="dropzone-file" type="file" class="hidden" onChange={imageHandler}/>
-              </label>
-            </div>
-          </div>
-          <button className="bg-[#D6482B] font-semibold hover:bg-[#b8381e] text-xl transition-all duration-300 py-2 px-4 rounded-md text-white w-[280px] mx-auto lg:w-[640px] my-4">{loading ? "Creating Auction..." : "Create Auction"}</button>
-        </form>
-      </div>
-    </article>
-  );
+            </article>
+
+            {/* Camera Modal */}
+            {showCamera && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+                    <div className="bg-white p-4 rounded-lg flex flex-col items-center">
+                        <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" className="rounded-md" width={500} height={500} />
+                        <div className="mt-4 flex gap-4">
+                            <button onClick={capture} className="bg-blue-500 text-white font-semibold hover:bg-blue-700 transition-all duration-300 py-2 px-4 rounded-md">Take Photo</button>
+                            <button onClick={() => setShowCamera(false)} className="bg-red-500 text-white font-semibold hover:bg-red-700 transition-all duration-300 py-2 px-4 rounded-md">Close Camera</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
 };
 
 export default CreateAuction;

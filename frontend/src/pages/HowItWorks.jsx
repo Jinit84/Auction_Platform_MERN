@@ -26,7 +26,7 @@ const HowItWorks = () => {
       icon: <FaEnvelope />,
       title: "Winning Bid Notification",
       description:
-        "After winning an item, the highest bidder will receive an email with the Auctioneer's payment method information, including bank transfer, Easypaisa, and PayPal.",
+        "After winning an item, the highest bidder will receive an email with the Auctioneer's payment method information, including bank transfer, razorpay, and PayPal.",
     },
     {
       icon: <FaDollarSign />,

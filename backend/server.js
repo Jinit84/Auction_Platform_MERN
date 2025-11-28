@@ -1,5 +1,14 @@
 import app from "./app.js";
 import cloudinary from "cloudinary";
+import cors from "cors"; 
+
+app.use(
+  cors({
+    origin: [process.env.FRONTEND_URL],
+    methods: ["POST", "GET", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

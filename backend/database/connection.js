@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
 
 export const connection = () => {
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/auction_platform';
+  console.log(`Connecting to MongoDB at: ${mongoUri}`);
+  
   mongoose
-    .connect(process.env.MONGO_URI, {
+    .connect(mongoUri, {
       dbName: "MERN_AUCTION_PLATFORM",
     })
     .then(() => {

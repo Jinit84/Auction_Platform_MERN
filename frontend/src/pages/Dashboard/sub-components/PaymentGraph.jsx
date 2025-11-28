@@ -7,67 +7,35 @@ import {
   Title,
   Tooltip,
   Legend,
-  LineElement,
-  PointElement,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { useSelector } from "react-redux";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  PointElement
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const PaymentGraph = () => {
   const { monthlyRevenue } = useSelector((state) => state.superAdmin);
 
   const data = {
-    labels: [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ],
+    labels: [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ],
     datasets: [
       {
-        label: "Total Payment Received",
+        label: "Revenue ($)",
         data: monthlyRevenue,
-        backgroundColor: "#D6482B",
+        backgroundColor: "#4A90E2", // Our --brand blue
+        borderRadius: 4,
       },
     ],
   };
 
   const options = {
+    responsive: true,
     scales: {
-      y: {
-        beginAtZero: true,
-        max: 5000,
-        ticks: {
-          callback: function (value) {
-            return value.toLocaleString();
-          },
-        },
-      },
+        y: { beginAtZero: true }
     },
     plugins: {
-      title: {
-        display: true,
-        text: "Monthly Total Payments Received",
-      },
+      legend: { display: false },
+      title: { display: false },
     },
   };
 

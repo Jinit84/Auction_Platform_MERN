@@ -7,16 +7,21 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
+const StatusBadge = ({ status }) => {
+  const baseClasses = "px-2 py-1 text-xs font-semibold rounded-full";
+  const statusClasses = {
+    Pending: "bg-yellow-100 text-yellow-800",
+    Approved: "bg-green-100 text-green-800",
+    Rejected: "bg-red-100 text-red-800",
+    Settled: "bg-blue-100 text-blue-800",
+  };
+  return <span className={`${baseClasses} ${statusClasses[status] || 'bg-gray-100 text-gray-800'}`}>{status}</span>;
+}
+
 const PaymentProofs = () => {
-  const { paymentProofs, singlePaymentProof } = useSelector(
-    (state) => state.superAdmin
-  );
+  const { paymentProofs, singlePaymentProof } = useSelector((state) => state.superAdmin);
   const [openDrawer, setOpenDrawer] = useState(false);
   const dispatch = useDispatch();
-
-  const handlePaymentProofDelete = (id) => {
-    dispatch(deletePaymentProof(id));
-  };
 
   const handleFetchPaymentDetail = (id) => {
     dispatch(getSinglePaymentProofDetail(id));
@@ -31,42 +36,29 @@ const PaymentProofs = () => {
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white mt-5">
-          <thead className="bg-gray-800 text-white">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="w-1/3 py-2">User ID</th>
-              <th className="w-1/3 py-2">Status</th>
-              <th className="w-1/3 py-2">Actions</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="text-gray-700">
+          <tbody className="divide-y divide-gray-200">
             {paymentProofs.length > 0 ? (
-              paymentProofs.map((element, index) => {
-                return (
-                  <tr key={index}>
-                    <td className="py-2 px-4 text-center">{element.userId}</td>
-                    <td className="py-2 px-4 text-center">{element.status}</td>
-                    <td className="flex items-center py-4 justify-center gap-3">
-                      <button
-                        className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-700 transition-all duration-300"
-                        onClick={() => handleFetchPaymentDetail(element._id)}
-                      >
-                        Update
-                      </button>
-                      <button
-                        className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700 transition-all duration-300"
-                        onClick={() => handlePaymentProofDelete(element._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+              paymentProofs.map((element) => (
+                <tr key={element._id} className="hover:bg-gray-50">
+                  <td className="py-4 px-6 text-sm text-gray-500 truncate" style={{maxWidth: '150px'}}>{element.userId}</td>
+                  <td className="py-4 px-6 text-sm font-medium text-gray-900">${element.amount.toLocaleString()}</td>
+                  <td className="py-4 px-6"><StatusBadge status={element.status} /></td>
+                  <td className="py-4 px-6 flex items-center gap-2">
+                    <button onClick={() => handleFetchPaymentDetail(element._id)} className="text-sm bg-[var(--brand)] text-white py-1 px-3 rounded-md hover:opacity-90">Update</button>
+                  </td>
+                </tr>
+              ))
             ) : (
-              <tr className="text-center text-xl text-sky-600 py-3">
-                <td>No payment proofs are found.</td>
-              </tr>
+              <tr><td colSpan="4" className="text-center py-8 text-gray-500">No payment proofs found.</td></tr>
             )}
           </tbody>
         </table>
@@ -76,109 +68,69 @@ const PaymentProofs = () => {
   );
 };
 
-export default PaymentProofs;
-
 export const Drawer = ({ setOpenDrawer, openDrawer }) => {
-  const { singlePaymentProof, loading } = useSelector(
-    (state) => state.superAdmin
-  );
-  const [amount, setAmount] = useState(singlePaymentProof.amount || "");
-  const [status, setStatus] = useState(singlePaymentProof.status || "");
+  const { singlePaymentProof, loading } = useSelector((state) => state.superAdmin);
+  const [amount, setAmount] = useState("");
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+      if (singlePaymentProof) {
+          setAmount(singlePaymentProof.amount || "");
+          setStatus(singlePaymentProof.status || "");
+      }
+  }, [singlePaymentProof]);
 
   const dispatch = useDispatch();
   const handlePaymentProofUpdate = () => {
     dispatch(updatePaymentProof(singlePaymentProof._id, status, amount));
+    setOpenDrawer(false);
   };
+  
+  if (!openDrawer || !singlePaymentProof) return null;
 
   return (
-    <>
-      <section
-        className={`fixed ${
-          openDrawer && singlePaymentProof.userId ? "bottom-0" : "-bottom-full"
-        }  left-0 w-full transition-all duration-300 h-full bg-[#00000087] flex items-end`}
-      >
-        <div className="bg-white h-fit transition-all duration-300 w-full">
-          <div className="w-full px-5 py-8 sm:max-w-[640px] sm:m-auto">
-            <h3 className="text-[#D6482B]  text-3xl font-semibold text-center mb-1">
-              Update Payment Proof
-            </h3>
-            <p className="text-stone-600">
-              You can update payment status and amount.
-            </p>
-            <form className="flex flex-col gap-5 my-5">
-              <div className="flex flex-col gap-3">
-                <label className="text-[16px] text-stone-600 ">User ID</label>
-                <input
-                  type="text"
-                  value={singlePaymentProof.userId || ""}
-                  disabled
-                  onChange={(e) => e.target.value}
-                  className="text-xl px-1 py-2 bg-transparent border-[1px] border-stone-600  rounded-md focus:outline-none  text-stone-600"
-                />
-              </div>
-              <div className="flex flex-col gap-3">
-                <label className="text-[16px] text-stone-600">Amount</label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="text-xl px-1 py-2 bg-transparent border-[1px] border-stone-600  rounded-md focus:outline-none"
-                />
-              </div>
-              <div className="flex flex-col gap-3">
-                <label className="text-[16px] text-stone-600">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="text-xl px-1 py-2 bg-transparent border-[1px] border-stone-600  rounded-md focus:outline-none"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Settled">Settled</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-3">
-                <label className="text-[16px] text-stone-600">Comment</label>
-                <textarea
-                  rows={5}
-                  value={singlePaymentProof.comment || ""}
-                  onChange={(e) => e.target.value}
-                  disabled
-                  className="text-xl px-1 py-2 bg-transparent border-[1px] border-stone-600  rounded-md focus:outline-none text-stone-600"
-                />
-              </div>
-              <div>
-                <Link
-                  to={singlePaymentProof.proof?.url || ""}
-                  className="bg-[#D6482B] flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-[#b8381e]"
-                  target="_blank"
-                >
-                  Payment Proof (SS)
-                </Link>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="bg-blue-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-blue-700"
-                  onClick={handlePaymentProofUpdate}
-                >
-                  {loading ? "Updating Payment Proof" : "Update Payment Proof"}
+    <div className={`fixed inset-0 bg-black bg-opacity-60 flex justify-end z-50 transition-opacity duration-300 ${openDrawer ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+      <div className={`bg-white w-full max-w-md h-full shadow-xl transition-transform duration-300 ${openDrawer ? "translate-x-0" : "translate-x-full"}`} >
+        <div className="p-6 h-full flex flex-col">
+            <h3 className="text-2xl font-semibold text-[var(--foreground)]">Update Proof</h3>
+            <p className="text-[var(--muted-foreground)] mb-6">Review and update the payment status.</p>
+            
+            <div className="space-y-4 flex-grow">
+                 <div>
+                    <label className="text-sm font-medium text-gray-500">User ID</label>
+                    <input type="text" value={singlePaymentProof.userId || ""} disabled className="w-full mt-1 p-2 border bg-gray-50 rounded-md"/>
+                </div>
+                 <div>
+                    <label className="text-sm font-medium text-gray-500">Amount</label>
+                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"/>
+                </div>
+                 <div>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]">
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Settled">Settled</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-gray-500">User Comment</label>
+                    <textarea value={singlePaymentProof.comment || ""} disabled rows={4} className="w-full mt-1 p-2 border bg-gray-50 rounded-md"/>
+                </div>
+                <Link to={singlePaymentProof.proof?.url || ""} target="_blank" rel="noopener noreferrer" className="block text-center w-full bg-gray-100 text-gray-700 font-semibold py-2 rounded-md hover:bg-gray-200">View Screenshot</Link>
+            </div>
+            
+            <div className="mt-6 flex gap-3">
+                <button type="button" onClick={() => setOpenDrawer(false)} className="w-full bg-gray-200 text-gray-700 font-semibold py-3 rounded-md hover:bg-gray-300">Cancel</button>
+                <button type="button" onClick={handlePaymentProofUpdate} disabled={loading} className="w-full bg-[var(--brand)] text-white font-semibold py-3 rounded-md hover:opacity-90 disabled:opacity-50">
+                    {loading ? "Updating..." : "Update"}
                 </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="bg-yellow-500 flex justify-center w-full py-2 rounded-md text-white font-semibold text-xl transition-all duration-300 hover:bg-yellow-700"
-                  onClick={() => setOpenDrawer(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 };
+
+
+export default PaymentProofs;

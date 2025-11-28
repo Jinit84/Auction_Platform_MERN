@@ -46,6 +46,11 @@ const auctionSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // NEW FIELD: Track if the bidder has paid
+  isPaid: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

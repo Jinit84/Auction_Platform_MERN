@@ -12,11 +12,12 @@ import { trackCommissionStatus } from "../middlewares/trackCommissionStatus.js";
 
 const router = express.Router();
 
+console.log("✅ Auction Routes file loaded successfully!");
 router.post(
   "/create",
   isAuthenticated,
   isAuthorized("Auctioneer"),
-  trackCommissionStatus,
+  //trackCommissionStatus,
   addNewAuctionItem
 );
 

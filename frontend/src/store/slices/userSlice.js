@@ -9,6 +9,9 @@ const userSlice = createSlice({
     isAuthenticated: false,
     user: {},
     leaderboard: [],
+    otpSent: false,
+    error: null,
+    message: null,
   },
   reducers: {
     registerRequest(state, action) {
@@ -83,6 +86,42 @@ const userSlice = createSlice({
       state.isAuthenticated = state.isAuthenticated;
       state.leaderboard = state.leaderboard;
       state.loading = false;
+      state.error = null;
+      state.message = null;
+    },
+    // OTP Actions
+    requestOTPRequest(state) {
+      state.loading = true;
+      state.otpSent = false;
+      state.error = null;
+      state.message = null;
+    },
+    requestOTPSuccess(state, action) {
+      state.loading = false;
+      state.otpSent = true;
+      state.message = action.payload.message;
+      state.error = null;
+    },
+    requestOTPFailed(state, action) {
+      state.loading = false;
+      state.otpSent = false;
+      state.error = action.payload || 'Failed to send OTP';
+    },
+    verifyOTPRequest(state) {
+      state.loading = true;
+      state.error = null;
+      state.message = null;
+    },
+    verifyOTPSuccess(state, action) {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload.user;
+      state.otpSent = false;
+      state.message = action.payload.message;
+    },
+    verifyOTPFailed(state, action) {
+      state.loading = false;
+      state.error = action.payload || 'Failed to verify OTP';
     },
   },
 });
@@ -157,6 +196,51 @@ export const fetchUser = () => async (dispatch) => {
     dispatch(userSlice.actions.fetchUserFailed());
     dispatch(userSlice.actions.clearAllErrors());
     console.error(error);
+  }
+};
+
+// Request OTP for login
+export const requestOTP = (credentials) => async (dispatch) => {
+  dispatch(userSlice.actions.requestOTPRequest());
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/v1/user/login/request-otp",
+      credentials,
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    dispatch(userSlice.actions.requestOTPSuccess(response.data));
+    return { success: true, data: response.data };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to send OTP';
+    dispatch(userSlice.actions.requestOTPFailed(errorMessage));
+    toast.error(errorMessage);
+    return { success: false, error: errorMessage };
+  }
+};
+
+// Verify OTP for login
+export const verifyOTP = (otpData) => async (dispatch) => {
+  dispatch(userSlice.actions.verifyOTPRequest());
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/v1/user/login/verify-otp",
+      otpData,
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    dispatch(userSlice.actions.verifyOTPSuccess(response.data));
+    toast.success('Login successful!');
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to verify OTP';
+    dispatch(userSlice.actions.verifyOTPFailed(errorMessage));
+    toast.error(errorMessage);
+    return { success: false, error: errorMessage };
   }
 };
 

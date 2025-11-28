@@ -1,84 +1,79 @@
 import React from "react";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import FeaturedAuctions from "./home-sub-components/FeaturedAuctions";
 import UpcomingAuctions from "./home-sub-components/UpcomingAuctions";
 import Leaderboard from "./home-sub-components/Leaderboard";
-import Spinner from "@/custom-components/Spinner";
+import { FaGavel, FaSearch, FaTrophy, FaRegCreditCard } from "react-icons/fa";
+
+const howItWorksSteps = [
+  { icon: <FaSearch size={24} />, title: "Find Your Item", description: "Browse through categories and discover unique items." },
+  { icon: <FaGavel size={24} />, title: "Place Your Bid", description: "Enter your bid amount and stay ahead of the competition." },
+  { icon: <FaTrophy size={24} />, title: "Win the Auction", description: "The highest bidder wins when the timer runs out." },
+  { icon: <FaRegCreditCard size={24} />, title: "Pay & Receive", description: "Complete the payment and get your new item delivered." },
+];
 
 const Home = () => {
-  const howItWorks = [
-    { title: "Post Items", description: "Auctioneer posts items for bidding." },
-    { title: "Place Bids", description: "Bidders place bids on listed items." },
-    {
-      title: "Win Notification",
-      description: "Highest bidder receives a winning email.",
-    },
-    {
-      title: "Payment & Fees",
-      description: "Bidder pays; auctioneer pays 5% fee.",
-    },
-  ];
-
-  const { isAuthenticated } = useSelector((state) => state.user);
   return (
-    <>
-      <section className="w-full ml-0 m-0 h-fit px-5 pt-20 lg:pl-[320px] flex flex-col min-h-screen py-4 justify-center">
-        <div>
-          <p className="text-[#DECCBE] font-bold text-xl mb-8">
-            Transparency Leads to Your Victory
-          </p>
-          <h1
-            className={`text-[#111] text-2xl font-bold mb-2 min-[480px]:text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl`}
-          >
-            Transparent Auctions
-          </h1>
-          <h1
-            className={`text-[#d6482b] text-2xl font-bold mb-2 min-[480px]:text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl`}
-          >
-            Be The Winner
-          </h1>
-          <div className="flex gap-4 my-8">
-            {!isAuthenticated && (
-              <>
-                <Link
-                  to="/sign-up"
-                  className="bg-[#d6482b] font-semibold hover:bg-[#b8381e] rounded-md px-8 flex items-center py-2 text-white  transition-all duration-300"
-                >
-                  Sign Up
-                </Link>
-                <Link
-                  to={"/login"}
-                  className="text-[#DECCBE] bg-transparent border-2 border-[#DECCBE] hover:bg-[#fff3fd] hover:text-[#fdba88] font-bold text-xl  rounded-md px-8 flex items-center py-2 transition-all duration-300"
-                >
-                  Login
-                </Link>
-              </>
-            )}
-          </div>
+    <main className="w-full lg:ml-64">
+      <section className="relative h-[70vh] flex items-center justify-center">
+        {/* Animated lively background */}
+        <div className="absolute inset-0 h-[70vh] w-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--background)] via-[var(--accent)] to-[var(--brand-light)] opacity-80 animate-pulse"></div>
+          {/* Floating circles for 'live' effect */}
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[var(--brand-light)] opacity-30 rounded-full animate-bounce-slow"></div>
+          <div className="absolute top-2/3 left-2/3 w-24 h-24 bg-[var(--accent)] opacity-20 rounded-full animate-bounce-slower"></div>
+          <div className="absolute bottom-10 right-1/3 w-16 h-16 bg-[var(--brand)] opacity-20 rounded-full animate-bounce"></div>
         </div>
-        <div className="flex flex-col gap-6">
-          <h3 className="text-[#111] text-xl font-semibold mb-2 min-[480px]:text-xl md:text-2xl lg:text-3xl">How it works</h3>
-          <div className="flex flex-col gap-4 md:flex-row md:flex-wrap w-full">
-            {howItWorks.map((element) => {
-              return (
-                <div
-                  key={element.title}
-                  className="bg-white flex flex-col gap-2 p-2 rounded-md h-[96px] justify-center md:w-[48%] lg:w-[47%] 2xl:w-[24%] hover:shadow-md transition-all duration-300"
-                >
-                  <h5 className="font-bold">{element.title}</h5>
-                  <p>{element.description}</p>
+        {/* Overlay for contrast */}
+        <div className="absolute inset-0 h-[70vh] bg-black/40"></div>
+        <div className="relative z-10 flex flex-col items-center justify-center w-full text-center p-5">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight text-white">Discover, Bid, and Win</h1>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-white">The premier online marketplace for unique finds and exclusive collections. Your next treasure awaits.</p>
+          <Link to="/auctions" className="bg-[var(--brand)] text-white font-bold text-lg px-8 py-3 rounded-md hover:bg-[var(--brand-dark)] transition-all duration-300 shadow-lg">
+            Browse Live Auctions
+          </Link>
+        </div>
+      </section>
+
+  <div className="p-8">
+        <section className="my-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[var(--foreground)]">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {howItWorksSteps.map((step) => (
+              <div key={step.title} className="bg-[var(--card)] p-6 rounded-lg text-center flex flex-col items-center shadow-md">
+                <div className="bg-[var(--accent)] text-white rounded-full p-4 mb-4">
+                  {step.icon}
                 </div>
-              );
-            })}
+                <h3 className="font-semibold text-xl mb-2 text-[var(--card-foreground)]">{step.title}</h3>
+                <p className="text-[var(--muted-foreground)]">{step.description}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
         <FeaturedAuctions />
         <UpcomingAuctions />
         <Leaderboard />
-      </section>
-    </>
+      </div>
+    </main>
   );
 };
 
 export default Home;
+// Add custom animations for lively effect
+// Add to global CSS or Tailwind config if not present
+/*
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-30px); }
+}
+@keyframes bounce-slower {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 3s infinite;
+}
+.animate-bounce-slower {
+  animation: bounce-slower 5s infinite;
+}
+*/

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { IoTimerOutline } from "react-icons/io5";
 
 const Card = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   const calculateTimeLeft = () => {
@@ -10,7 +11,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
 
     if (startDifference > 0) {
       timeLeft = {
-        type: "Starts In:",
+        type: "Starts In",
         days: Math.floor(startDifference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((startDifference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((startDifference / 1000 / 60) % 60),
@@ -18,7 +19,7 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
       };
     } else if (endDifference > 0) {
       timeLeft = {
-        type: "Ends In:",
+        type: "Ends In",
         days: Math.floor(endDifference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((endDifference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((endDifference / 1000 / 60) % 60),
@@ -31,53 +32,60 @@ const Card = ({ imgSrc, title, startingBid, startTime, endTime, id }) => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Update the timer every second
+    const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
-    });
-    return () => clearTimeout(timer);
-  }, [timeLeft]);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [startTime, endTime]);
 
   const formatTimeLeft = ({ days, hours, minutes, seconds }) => {
     const pad = (num) => String(num).padStart(2, "0");
-    return `(${days} Days) ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    if (days > 0) {
+      return `${days}d ${pad(hours)}h ${pad(minutes)}m`;
+    }
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
   return (
-    <>
-      <Link
-        to={`/auction/item/${id}`}
-        className="flex-grow basis-full bg-white rounded-md group sm:basis-56 lg:basis-60 2xl:basis-80"
-      >
+    <Link
+      to={`/auction/item/${id}`}
+      className="group flex-grow basis-full sm:basis-56 lg:basis-60 2xl:basis-80 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
+    >
+      <div className="relative w-full h-48 overflow-hidden">
         <img
           src={imgSrc}
           alt={title}
-          className="w-full aspect-[4/3] m-auto md:p-12"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="px-2 pt-4 pb-2">
-          <h5 className="font-semibold text-[18px] group-hover:text-[#d6482b] mb-2">
-            {title}
-          </h5>
-          {startingBid && (
-            <p className="text-stone-600 font-light">
-              Starting Bid:{" "}
-              <span className="text-[#fdba88] font-bold ml-1">
-                {startingBid}
-              </span>
+      </div>
+      <div className="p-4 flex flex-col flex-grow">
+        <h3 className="font-semibold text-lg text-[var(--foreground)] mb-2 truncate group-hover:text-[var(--brand)]">
+          {title}
+        </h3>
+        <div className="mt-auto">
+          <div className="mb-3">
+            <p className="text-sm text-[var(--muted-foreground)]">Starting Bid</p>
+            <p className="text-xl font-bold text-[var(--foreground)]">
+              Rs{startingBid.toLocaleString()}
             </p>
-          )}
-          <p className="text-stone-600 font-light">
-            {timeLeft.type}
+          </div>
+          <div>
+            <p className="text-sm text-[var(--muted-foreground)] flex items-center gap-1">
+              <IoTimerOutline /> {timeLeft.type || "Auction"}
+            </p>
             {Object.keys(timeLeft).length > 1 ? (
-              <span className="text-[#fdba88] font-bold ml-1">
+              <p className="text-lg font-bold text-[var(--brand)] font-mono">
                 {formatTimeLeft(timeLeft)}
-              </span>
+              </p>
             ) : (
-              <span className="text-[#fdba88] font-bold ml-1">Time's up!</span>
+              <p className="text-lg font-bold text-red-500">Ended</p>
             )}
-          </p>
+          </div>
         </div>
-      </Link>
-    </>
+      </div>
+    </Link>
   );
 };
 
